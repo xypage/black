@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Black</title>
+    <!-- I know directly included css/js is bad but this is a really simple file 
+        so I'm making it as minimal as possible, just one file to pass around 
+        and have all the (very basic) functionality -->
     <style>
       * {
         margin: 0;
@@ -23,60 +26,62 @@
     <a href="" id="invisible"></a>
   </body>
   <script>
-    function save() {
-      let width = window.innerWidth;
-      let height = window.innerHeight;
-      let buffer = new Uint8ClampedArray(width * height * 4); // have enough bytes
-
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-          let pos = (y * width + x) * 4;
-          buffer[pos] = 0;
-          buffer[pos + 1] = 0;
-          buffer[pos + 2] = 0;
-          buffer[pos + 3] = 255;
-        }
-      }
-
-      // create off-screen canvas element
-      let canvas = document.createElement("canvas");
-      let ctx = canvas.getContext("2d");
-
-      canvas.width = width;
-      canvas.height = height;
-
-      // create imageData object
-      let idata = ctx.createImageData(width, height);
-
-      // set our buffer as source
-      idata.data.set(buffer);
-
-      // update canvas with new data
-      ctx.putImageData(idata, 0, 0);
-
-      let downloadLink = document.getElementById("invisible");
-      downloadLink.setAttribute("download", "black.png");
-      let dataURL = canvas.toDataURL("image/png");
-      let url = dataURL.replace(
-        /^data:image\/png/,
-        "data:application/octet-stream"
-      );
-      downloadLink.setAttribute("href", url);
-      downloadLink.click();
-    }
+    let downloadLink = document.getElementById("invisible");
+    downloadLink.setAttribute("download", "black.png");
     document.addEventListener(
       "keydown",
-      function(e) {
-        e.preventDefault();
+      function (e) {
         if (
           e.keyCode === 83 &&
           (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)
         ) {
-          save();
+          // stop the default ctrl+s behavior of saving the webpage as html
+          e.preventDefault();
+
+          // get size of screen
+          let width = window.innerWidth;
+          let height = window.innerHeight;
+          // make buffer that takes up that size
+          let buffer = new Uint8ClampedArray(width * height * 4); // have enough bytes
+          // fill it with black (0, 0, 0) at full alpha (the 255 at the end)
+          for (let i = 0; i < height * width * 4; i += 4) {
+            buffer[i] = 0;
+            buffer[i + 1] = 0;
+            buffer[i + 2] = 0;
+            buffer[i + 3] = 255;
+          }
+
+          // create off-screen canvas element with size equal to browser
+          let canvas = document.createElement("canvas");
+          let ctx = canvas.getContext("2d");
+          canvas.width = width;
+          canvas.height = height;
+
+          // create imageData object
+          let idata = ctx.createImageData(width, height);
+
+          // set our buffer as source
+          idata.data.set(buffer);
+
+          // update canvas with new data
+          ctx.putImageData(idata, 0, 0);
+
+          // set that canvas up as an image source to save from
+          let dataURL = canvas.toDataURL("image/png");
+          let url = dataURL.replace(
+            /^data:image\/png/,
+            "data:application/octet-stream"
+          );
+          // point our invisible download link to it and simulate a click
+          downloadLink.setAttribute("href", url);
+          downloadLink.click();
+
+          // remove the canvas now, they might change browser size and save again,
+          // generating a new one, and we don't just want to let those stack up
+          canvas.remove();
         }
       },
       false
     );
-    document.querySelector("body").addEventListener("click", save);
   </script>
 </html>
