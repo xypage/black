@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Black</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        height: 100vh;
+        width: 100vw;
+        background-color: #000;
+      }
+      #invisible {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="" id="invisible"></a>
+  </body>
+  <script>
+    function save() {
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      let buffer = new Uint8ClampedArray(width * height * 4); // have enough bytes
+
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          let pos = (y * width + x) * 4;
+          buffer[pos] = 0;
+          buffer[pos + 1] = 0;
+          buffer[pos + 2] = 0;
+          buffer[pos + 3] = 255;
+        }
+      }
+
+      // create off-screen canvas element
+      let canvas = document.createElement("canvas");
+      let ctx = canvas.getContext("2d");
+
+      canvas.width = width;
+      canvas.height = height;
+
+      // create imageData object
+      let idata = ctx.createImageData(width, height);
+
+      // set our buffer as source
+      idata.data.set(buffer);
+
+      // update canvas with new data
+      ctx.putImageData(idata, 0, 0);
+
+      let downloadLink = document.getElementById("invisible");
+      downloadLink.setAttribute("download", "black.png");
+      let dataURL = canvas.toDataURL("image/png");
+      let url = dataURL.replace(
+        /^data:image\/png/,
+        "data:application/octet-stream"
+      );
+      downloadLink.setAttribute("href", url);
+      downloadLink.click();
+    }
+    document.addEventListener(
+      "keydown",
+      function(e) {
+        e.preventDefault();
+        if (
+          e.keyCode === 83 &&
+          (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)
+        ) {
+          save();
+        }
+      },
+      false
+    );
+    document.querySelector("body").addEventListener("click", save);
+  </script>
+</html>
