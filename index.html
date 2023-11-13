@@ -28,6 +28,52 @@
   <script>
     let downloadLink = document.getElementById("invisible");
     downloadLink.setAttribute("download", "black.png");
+
+    function save() {
+      // get size of screen
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      // make buffer that takes up that size
+      let buffer = new Uint8ClampedArray(width * height * 4); // have enough bytes
+      // fill it with black (0, 0, 0) at full alpha (the 255 at the end)
+      for (let i = 0; i < height * width * 4; i += 4) {
+        buffer[i] = 0;
+        buffer[i + 1] = 0;
+        buffer[i + 2] = 0;
+        buffer[i + 3] = 255;
+      }
+
+      // create off-screen canvas element with size equal to browser
+      let canvas = document.createElement("canvas");
+      let ctx = canvas.getContext("2d");
+      canvas.width = width;
+      canvas.height = height;
+
+      // create imageData object
+      let idata = ctx.createImageData(width, height);
+
+      // set our buffer as source
+      idata.data.set(buffer);
+
+      // update canvas with new data
+      ctx.putImageData(idata, 0, 0);
+
+      // set that canvas up as an image source to save from
+      let dataURL = canvas.toDataURL("image/png");
+      let url = dataURL.replace(
+        /^data:image\/png/,
+        "data:application/octet-stream"
+      );
+      // point our invisible download link to it and simulate a click
+      downloadLink.setAttribute("href", url);
+      downloadLink.click();
+
+      // remove the canvas now, they might change browser size and save again,
+      // generating a new one, and we don't just want to let those stack up
+      canvas.remove();
+    }
+
+    // Add the ctrl/cmd+s event listener for desktop
     document.addEventListener(
       "keydown",
       function (e) {
@@ -35,53 +81,15 @@
           e.keyCode === 83 &&
           (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)
         ) {
-          // stop the default ctrl+s behavior of saving the webpage as html
+          // make sure the page doesn't do the default save behavior of downloading the html
           e.preventDefault();
-
-          // get size of screen
-          let width = window.innerWidth;
-          let height = window.innerHeight;
-          // make buffer that takes up that size
-          let buffer = new Uint8ClampedArray(width * height * 4); // have enough bytes
-          // fill it with black (0, 0, 0) at full alpha (the 255 at the end)
-          for (let i = 0; i < height * width * 4; i += 4) {
-            buffer[i] = 0;
-            buffer[i + 1] = 0;
-            buffer[i + 2] = 0;
-            buffer[i + 3] = 255;
-          }
-
-          // create off-screen canvas element with size equal to browser
-          let canvas = document.createElement("canvas");
-          let ctx = canvas.getContext("2d");
-          canvas.width = width;
-          canvas.height = height;
-
-          // create imageData object
-          let idata = ctx.createImageData(width, height);
-
-          // set our buffer as source
-          idata.data.set(buffer);
-
-          // update canvas with new data
-          ctx.putImageData(idata, 0, 0);
-
-          // set that canvas up as an image source to save from
-          let dataURL = canvas.toDataURL("image/png");
-          let url = dataURL.replace(
-            /^data:image\/png/,
-            "data:application/octet-stream"
-          );
-          // point our invisible download link to it and simulate a click
-          downloadLink.setAttribute("href", url);
-          downloadLink.click();
-
-          // remove the canvas now, they might change browser size and save again,
-          // generating a new one, and we don't just want to let those stack up
-          canvas.remove();
+          save();
         }
       },
       false
     );
+
+    // add an event listener for a touch too, in case someone is on mobile/tablet with no keyboard to ctrl/cmd+s
+    document.addEventListener("touchstart", save);
   </script>
 </html>
