@@ -30,9 +30,6 @@
     downloadLink.setAttribute("download", "black.png");
 
     function save() {
-      // stop the default ctrl+s behavior of saving the webpage as html
-      e.preventDefault();
-
       // get size of screen
       let width = window.innerWidth;
       let height = window.innerHeight;
@@ -84,6 +81,7 @@
           e.keyCode === 83 &&
           (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)
         ) {
+          // make sure the page doesn't do the default save behavior of downloading the html
           e.preventDefault();
           save();
         }
